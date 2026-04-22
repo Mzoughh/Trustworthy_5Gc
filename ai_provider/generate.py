@@ -55,6 +55,22 @@ def load_prompt_json(prompt_json_path: Union[str, Path]) -> Tuple[int, List[int]
     return num_images, seeds, device_type
 
 
+def load_prompt_data(data: dict) -> Tuple[int, List[int], str]:
+    """Load prompt from an in-memory dict (assumed well-formed).
+
+    Expected format:
+        {
+            "prompt": [number_of_images, seeds],
+            "device_type": "cpu"|"cuda"|"cuda:0"|...
+        }
+    """
+    num_images = int(data['prompt'][0])
+    seeds_raw = data['prompt'][1]
+    seeds = num_range(seeds_raw) if isinstance(seeds_raw, str) else list(seeds_raw)
+    device_type = str(data['device_type'])
+    return num_images, seeds, device_type
+
+
 def load_network(device: str, network_pkl: str):
     
     # Init the device for the futur loading
@@ -91,7 +107,14 @@ def get_or_load_network(device_type: str) -> Tuple[torch.device, bool, torch.nn.
     normalized = str(device_type)
     with _MODEL_LOCK:
         if _CACHED_G is not None and _CACHED_DEVICE_TYPE == normalized:
+            print(f"[model-cache] hit device_type={normalized}")
             return _CACHED_DEVICE_INSTANCE, _CACHED_FORCE_FP32, _CACHED_G
+
+        previous = _CACHED_DEVICE_TYPE
+        if previous is None:
+            print(f"[model-cache] load device_type={normalized}")
+        else:
+            print(f"[model-cache] reload device_type={previous} -> {normalized}")
 
         # If switching away from CUDA, free cache when possible.
         if _CACHED_DEVICE_TYPE is not None and str(_CACHED_DEVICE_TYPE).startswith('cuda') and torch.cuda.is_available():
@@ -156,6 +179,22 @@ def run_from_prompt_json(prompt_json_path: Union[str, Path]) -> List[Path]:
     )
 
 
+def run_from_prompt_data(data: dict) -> List[Path]:
+    """Entry point for FastAPI (pass JSON body as dict)."""
+    num_images, seeds, device_type = load_prompt_data(data)
+    device_instance, force_fp32, G = get_or_load_network(device_type)
+    return generate_images(
+        device_instance=device_instance,
+        force_fp32=force_fp32,
+        G=G,
+        seeds=seeds,
+        num_images=num_images,
+        output_directory=DEFAULT_OUTDIR,
+        truncation_psi=DEFAULT_TRUNCATION_PSI,
+        noise_mode=DEFAULT_NOISE_MODE,
+    )
+
+
 def main(argv: Optional[List[str]] = None) -> None:
     parser = argparse.ArgumentParser(
         description='Generate images from a user JSON prompt (all other settings are fixed in this script).'
@@ -170,3 +209,5 @@ if __name__ == '__main__':
     main()
 
 #----------------------------------------------------------------------------
+
+# python generate.py --prompt-json input/prompt.json
