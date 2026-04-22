@@ -32,5 +32,6 @@ def generate(prompt: Optional[Dict[str, Any]] = Body(default=None)) -> Dict[str,
     paths = run_from_prompt_data(prompt)
     return {"images": [str(p) for p in paths]}
 
+
 # uvicorn fastapi_app:app --host 0.0.0.0 --port 8000 --workers 1
 # curl -X POST http://localhost:8000/generate

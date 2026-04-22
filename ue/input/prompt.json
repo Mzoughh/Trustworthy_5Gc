@@ -1,0 +1,6 @@
+{
+  "task_type": "authentication",
+  "model_name": "A",
+  "prompt": [2, "0"],
+  "device_type": "cpu"
+}
