@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# OS / editor
+.DS_Store
+.vscode/
+
+# Build / packaging
+build/
+dist/
+*.egg-info/
+
+# Project-specific (don’t commit weights or generated outputs)
+vanilla_weights/
+outputs/

@@ -1,0 +1,14 @@
+# Inference-only requirements for `generate.py` (StyleGAN2-ADA).
+#
+# PyTorch note:
+# - Keep torch in the 2.0.* range for this repo.
+# - For Docker/GPUs, install the wheel matching your CUDA/base image, e.g.:
+#   - CPU:    pip install --index-url https://download.pytorch.org/whl/cpu torch
+#   - CUDA:   pip install --index-url https://download.pytorch.org/whl/cu118 torch
+
+torch>=2.0,<2.1
+numpy
+Pillow
+requests
+click
+scipy
