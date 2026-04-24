@@ -1,6 +1,8 @@
 # SimpleRAN — AI Provider & Detection Module
 
-![Main idea](main_idea.png)
+<p align="center">
+  <img src="main_idea.png" alt="Main idea" width="900" />
+</p>
 
 This project aims to prepare the deployment of a **trustworthy AI pipeline at the edge (5G/6G edge infrastructure)**.  
 To support this goal, the repository provides two “complex” building blocks exposed as **FastAPI services**: an **AI generation provider** and a **detection/scoring module**, both designed to be modular and dynamically selectable via `model_name`.
