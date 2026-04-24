@@ -20,3 +20,4 @@ dist/
 # Project-specific (don’t commit weights or generated outputs)
 vanilla_weights/
 outputs/
+debug/

@@ -17,10 +17,10 @@ import legacy
 
 
 # Fixed runtime settings (deployment defaults).
-DEFAULT_NETWORK_PKL = 'vanilla_weights/CelebA_128x128.pkl'
+DEFAULT_NETWORK_PKL = 'vanilla_weights/CelebA_128_128.pkl'
 DEFAULT_OUTDIR = 'outputs'
 DEFAULT_TRUNCATION_PSI = 1.0
-DEFAULT_NOISE_MODE = 'const'  # const|random|none
+DEFAULT_NOISE_MODE = 'none'  # const|random|none
 
 
 _MODEL_LOCK = Lock()
@@ -90,8 +90,6 @@ def load_network(device: str, network_pkl: str):
     # StyleGAN2-ADA can internally switch to FP16 (`use_fp16`) unless we force FP32.
     # On CPU, some conv kernels are not implemented for float16, so we must avoid FP16.
     force_fp32 = (device_instance.type == 'cpu')
-    if force_fp32:
-        G = G.to(dtype=torch.float32)
 
     # This deployment assumes an unconditional network.
     if G.c_dim != 0:
@@ -147,11 +145,7 @@ def generate_images(
     saved: List[Path] = []
     for seed_idx, seed in enumerate(seeds):
         z = torch.from_numpy(np.random.RandomState(seed).randn(num_images, G.z_dim)).to(device_instance)
-        if force_fp32:
-            z = z.to(dtype=torch.float32)
         label = torch.zeros([z.shape[0], G.c_dim], device=device_instance)
-        if force_fp32:
-            label = label.to(dtype=torch.float32)
         with torch.inference_mode():
             img = G(z, label, truncation_psi=truncation_psi, noise_mode=noise_mode, force_fp32=force_fp32)
         img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
