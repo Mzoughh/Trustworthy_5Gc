@@ -148,8 +148,81 @@ detection_module/
 
 ---
 
+## 3) Watermarking Manager (`watermarking_manager/`)
+
+### Goal
+Expose an `/embed` API that embeds watermarks into images using the HiDDen method based on `model_name`.
+
+### API behavior
+- Endpoint: `POST /embed`
+- Input: JSON containing at least:
+  - `model_name` (e.g., `"A"`)
+  - `image` (path to the image to watermark)
+  - (optional) `device_type`
+
+The server:
+1. Loads the image and the key for the model.
+2. Embeds the watermark using the HiddenEncoder.
+3. Saves the watermarked image and returns the path.
+
+### Run the API
+From the repository root:
+
+```bash
+cd watermarking_manager
+python -m pip install -r requirements.txt
+uvicorn fastapi_app:app --host 0.0.0.0 --port 8002 --workers 1
+```
+
+### Example request
+```bash
+curl -X POST http://localhost:8002/embed \
+  -H "Content-Type: application/json" \
+  -d '{"image": "/path/to/image.png", "model_name": "A"}'
+```
+
+---
+
+## 4) AI Manager (`ai_manager/`)
+
+### Goal
+Expose a `/full_pipeline` API that orchestrates the entire trustworthy AI pipeline: generation, watermarking, and detection.
+
+### API behavior
+- Endpoint: `POST /full_pipeline`
+- Input: JSON similar to ai_provider prompt, containing:
+  - `model_name` (e.g., `"A"`)
+  - `prompt` (e.g., `[num_images, "seed"]`)
+  - `device_type` (e.g., `"cpu"`)
+
+The server:
+1. Calls the AI provider to generate images.
+2. For each generated image, calls the watermarking manager to embed watermark.
+3. Calls the detection module to verify the watermark.
+4. Returns the results for all images.
+
+### Run the API
+From the repository root:
+
+```bash
+cd ai_manager
+python -m pip install -r requirements.txt
+uvicorn fastapi_app:app --host 0.0.0.0 --port 8003 --workers 1
+```
+
+### Example request
+```bash
+curl -X POST http://localhost:8003/full_pipeline \
+  -H "Content-Type: application/json" \
+  -d @/Users/zough/Documents/Code/SimpleRAN/ai_provider/input/prompt.json
+```
+
+---
+
 ## Practical notes
 - `ai_provider/input/prompt.json` and `detection_module/input/prompt.json` use different schemas. Double-check your file path when running `curl` (otherwise you may send the wrong prompt).
 - Default ports:
   - Generation: `8000`
   - Detection: `8001`
+  - Watermarking: `8002`
+  - AI Manager: `8003`

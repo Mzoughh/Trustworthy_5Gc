@@ -17,7 +17,7 @@ import legacy
 
 
 # Fixed runtime settings (deployment defaults).
-DEFAULT_NETWORK_PKL = 'vanilla_weights/CelebA_128_128_BB.pkl'
+DEFAULT_NETWORK_PKL = 'vanilla_weights/CelebA_128x128.pkl'
 DEFAULT_OUTDIR = 'outputs'
 DEFAULT_TRUNCATION_PSI = 1.0
 DEFAULT_NOISE_MODE = 'none'  # const|random|none
@@ -177,7 +177,7 @@ def run_from_prompt_data(data: dict) -> List[Path]:
     """Entry point for FastAPI (pass JSON body as dict)."""
     num_images, seeds, device_type = load_prompt_data(data)
     device_instance, force_fp32, G = get_or_load_network(device_type)
-    return generate_images(
+    paths = generate_images(
         device_instance=device_instance,
         force_fp32=force_fp32,
         G=G,
@@ -187,6 +187,8 @@ def run_from_prompt_data(data: dict) -> List[Path]:
         truncation_psi=DEFAULT_TRUNCATION_PSI,
         noise_mode=DEFAULT_NOISE_MODE,
     )
+    # Convert to absolute paths so other services can find the files
+    return [p.resolve() for p in paths]
 
 
 def main(argv: Optional[List[str]] = None) -> None:
