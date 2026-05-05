@@ -92,30 +92,31 @@ def load_network(device: str, network_pkl_path: str):
     return device_instance, force_fp32, G_mapping, G_synthesis, z_dim, c_dim
 
 
-def get_or_load_network(device_type: str) -> Tuple[torch.device, bool, torch.nn.Module]:
+def get_or_load_network(device_type: str, enable_caching: bool = True) -> Tuple[torch.device, bool, torch.nn.Module]:
     """Return a cached network, reloading it only if device_type changes."""
    
     global _CACHED_DEVICE_TYPE, _CACHED_DEVICE_INSTANCE, _CACHED_FORCE_FP32, _CACHED_G_MAPPING, _CACHED_G_SYNTHESIS, _CACHED_Z_DIM, _CACHED_C_DIM
     normalized = str(device_type)
     
     with _MODEL_LOCK:
+        if enable_caching :
         # THE NETWORK IS ALREADY LOAD ON THE CORRECT DEVICE
-        if _CACHED_G_SYNTHESIS is not None and _CACHED_DEVICE_TYPE == normalized:
-            print(f"[model-cache] hit device_type={normalized}")
-            return _CACHED_DEVICE_INSTANCE, _CACHED_FORCE_FP32, _CACHED_G_MAPPING, _CACHED_G_SYNTHESIS, _CACHED_Z_DIM, _CACHED_C_DIM
-        previous = _CACHED_DEVICE_TYPE
-        if previous is None:
-            print(f"[model-cache] load device_type={normalized}")
-        
-        # THE NETWORK IS RELOADING ON THE NEW ONE 
-        else:
-            print(f"[model-cache] reload device_type={previous} -> {normalized}")
+            if _CACHED_G_SYNTHESIS is not None and _CACHED_DEVICE_TYPE == normalized:
+                print(f"[model-cache] hit device_type={normalized}")
+                return _CACHED_DEVICE_INSTANCE, _CACHED_FORCE_FP32, _CACHED_G_MAPPING, _CACHED_G_SYNTHESIS, _CACHED_Z_DIM, _CACHED_C_DIM
+            previous = _CACHED_DEVICE_TYPE
+            if previous is None:
+                print(f"[model-cache] load device_type={normalized}")
+            
+            # THE NETWORK IS RELOADING ON THE NEW ONE 
+            else:
+                print(f"[model-cache] reload device_type={previous} -> {normalized}")
 
-        if _CACHED_DEVICE_TYPE is not None and str(_CACHED_DEVICE_TYPE).startswith('cuda') and torch.cuda.is_available(): # If switching away from CUDA, free cache when possible.
-            try:
-                torch.cuda.empty_cache()
-            except Exception:
-                pass
+            if _CACHED_DEVICE_TYPE is not None and str(_CACHED_DEVICE_TYPE).startswith('cuda') and torch.cuda.is_available(): # If switching away from CUDA, free cache when possible.
+                try:
+                    torch.cuda.empty_cache()
+                except Exception:
+                    pass
 
         # RELOADING 
         device_instance, force_fp32, G_mapping, G_synthesis, z_dim, c_dim = load_network(normalized, network_pkl_path=DEFAULT_NETWORK_PKL)
@@ -128,6 +129,8 @@ def get_or_load_network(device_type: str) -> Tuple[torch.device, bool, torch.nn.
         _CACHED_C_DIM = c_dim
 
         return device_instance, force_fp32, G_mapping, G_synthesis, z_dim, c_dim
+    
+
 
 
 def generate_images(
