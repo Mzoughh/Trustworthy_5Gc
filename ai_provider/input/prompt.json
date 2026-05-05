@@ -1,5 +1,5 @@
 {
   "prompt": [1, "88"],
   "device_type": "cpu", 
-  "model_name" : "B"
+  "model_name" : "A"
 }
